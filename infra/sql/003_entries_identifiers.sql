@@ -1,0 +1,11 @@
+ALTER TABLE source.entries
+ALTER COLUMN entry_id
+ADD GENERATED  BY DEFAULT  AS IDENTITY ( START WITH 3 INCREMENT BY 1);
+
+ALTER TABLE source.entries
+ALTER COLUMN transaction_id TYPE UUID
+USING CASE 
+    WHEN transaction_id='DUMMY' 
+        THEN '11111111-1111-4111-8111-111111111111'::uuid
+    ELSE transaction_id::uuid
+END;
