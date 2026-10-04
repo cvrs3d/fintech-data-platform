@@ -6,6 +6,8 @@ The purpose of this project is to create simple data platform for fintech DWH in
 
 ## Current functionality
 
+The implementation assumes READ COMMITTED isolation. Successfully committed transfer requests are immutable and retained indefinitely in this MVP. Reusing an existing key with different parameters is rejected.
+
 Created PostgreSQL (Source schema), atomic creation of transfers, testing of rollback. !RAW, dbt, Airflow are not done yet!
 
 ## Setup
@@ -48,7 +50,7 @@ Created PostgreSQL (Source schema), atomic creation of transfers, testing of rol
     print(transaction_id)
     '
     ```
-    3. Test idempotency 
+    3. Test idempotency ! First run creates new transfer, for testing idempotency client should save first key and use it again instead of generating new one !
     ```bash
     uv run python - <<'PY'
     from concurrent.futures import ThreadPoolExecutor
@@ -56,9 +58,10 @@ Created PostgreSQL (Source schema), atomic creation of transfers, testing of rol
     from decimal import Decimal
     from uuid import uuid4
     from generator.transfer import create_transfer
+    from uuid import uuid4
 
     key = uuid4()
-    barrier = Barrier(2)
+    transaction_id = create_transfer(1, 2, Decimal("25.00"), key)
 
     def worker():
         barrier.wait(timeout=10)
