@@ -6,11 +6,11 @@ The purpose of this project is to create simple data platform for fintech DWH in
 
 ## Current functionality
 
-Created PpostgreSQL (Source schema), atomic creation of transfers, testing of rollback. !RAW, dbt, Airflow are not done yet!
+Created PostgreSQL (Source schema), atomic creation of transfers, testing of rollback. !RAW, dbt, Airflow are not done yet!
 
 ## Setup
 
-0)  Install dependecies: Git, Docker Engine с Compose, uv, python3.13
+0)  Install dependecies: Git, Docker Engine with Compose, uv, python3.13
     Clone the repository then `cd fintech-data-platform/`
     Run `cp .env.example .env` then  `chmod 600 .env`
 
@@ -36,12 +36,12 @@ Created PpostgreSQL (Source schema), atomic creation of transfers, testing of ro
 
 5) Test connection and demo entry 
     1. Connection: `uv run python generator/check_connection.py` output should be similar to this: `('fintech', 'postgres')`
-    2. Create a demo transfer: 
+    2. Create a demo transfer (every run creates new trnasfer): 
 
-uv run python -c '
-from decimal import Decimal
-from generator.transfer import create_transfer
+    ``` uv run python -c '
+    from decimal import Decimal
+    from generator.transfer import create_transfer
 
-transaction_id = create_transfer(1, 2, Decimal("25.00"))
-print(transaction_id)
-'
+    transaction_id = create_transfer(1, 2, Decimal("25.00"))
+    print(transaction_id)
+    ' ```

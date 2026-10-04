@@ -5,7 +5,7 @@ INSERT INTO source.customers (
     customer_id, first_name, last_name, birth_date, registered_at_dt
 )
 VALUES (
-    1, 'John', 'Doe', DATE '1993-01-01', CURRENT_DATE
+    1, 'John', 'Doe', DATE '1991-01-01', CURRENT_DATE
 );
 INSERT INTO source.customers (
     customer_id, first_name, last_name, birth_date, registered_at_dt
