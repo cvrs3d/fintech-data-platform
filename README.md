@@ -38,10 +38,12 @@ Created PostgreSQL (Source schema), atomic creation of transfers, testing of rol
     1. Connection: `uv run python generator/check_connection.py` output should be similar to this: `('fintech', 'postgres')`
     2. Create a demo transfer (every run creates new trnasfer): 
 
-    ``` uv run python -c '
-    from decimal import Decimal
-    from generator.transfer import create_transfer
+    ```bash
+        uv run python -c '
+        from decimal import Decimal
+        from generator.transfer import create_transfer
 
-    transaction_id = create_transfer(1, 2, Decimal("25.00"))
-    print(transaction_id)
-    ' ```
+        transaction_id = create_transfer(1, 2, Decimal("25.00"))
+        print(transaction_id)
+        '
+    ```
