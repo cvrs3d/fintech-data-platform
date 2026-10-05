@@ -5,3 +5,8 @@
 __pycache__/
 *.py[cod]
 .DS_Store
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+logs/
+dbt/.user.yml

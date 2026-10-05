@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: stg_entries
+    description: "One row per posted account movement."
+
+    columns:
+      - name: entry_id
+        description: "Movement identifier from the source."
+        data_tests:
+          - unique
+          - not_null
