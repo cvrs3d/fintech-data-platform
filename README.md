@@ -9,9 +9,17 @@ The purpose of this project is to create simple data platform for fintech DWH in
 Created PostgreSQL (Source schema), atomic creation of transfers, testing of rollback. 
 RAW layer and ingestion  developed.
 
+dbt is initialized and working, users can now run
+
+```bash
+dbt build --env-file  --project-dir  --profiles-dir
+dbt debug --env-file  --project-dir  --profiles-dir
+
+```
+
 ## TODO
 Airflow DAGs, orchestration, time-driven ingestion
-dbt
+
 
 ## Setup
 

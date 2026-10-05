@@ -1,0 +1,13 @@
+fintech:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "127.0.0.1"
+      port: 5432
+      user: "{{ env_var('POSTGRES_USER') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: "{{ env_var('POSTGRES_DB') }}"
+      schema: staging
+      threads: 1
+      connect_timeout: 5

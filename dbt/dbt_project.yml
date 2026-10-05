@@ -1,0 +1,12 @@
+name: fintech
+version: "1.0.0"
+config-version: 2
+
+profile: fintech
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+clean-targets:
+  - target
+  - dbt_packages
