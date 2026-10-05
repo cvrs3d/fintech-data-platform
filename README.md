@@ -6,7 +6,12 @@ The purpose of this project is to create simple data platform for fintech DWH in
 
 ## Current functionality
 
-Created PostgreSQL (Source schema), atomic creation of transfers, testing of rollback. !RAW, dbt, Airflow are not done yet!
+Created PostgreSQL (Source schema), atomic creation of transfers, testing of rollback. 
+RAW layer and ingestion  developed.
+
+## TODO
+Airflow DAGs, orchestration, time-driven ingestion
+dbt
 
 ## Setup
 

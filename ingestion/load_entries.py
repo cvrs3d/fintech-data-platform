@@ -24,7 +24,7 @@ def with_connection(f):
             cnn.rollback()
             raise
         else:
-            cnn.commit() # or maybe not
+            cnn.commit() 
         finally:
             cnn.close()
 
