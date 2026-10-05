@@ -37,6 +37,7 @@ dbt
     3. Alter tables: type `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/003_entries_identifiers.sql`
     4. Alter tables: type `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/004_transfer_requests.sql`
     5. Create raw layer entries: type `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/005_raw_entries.sql`
+    6. Create ops layer entries: type `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/006_ingestion_runs.sql`
 
 4) Sync dependencies 
     `uv sync --locked` 
