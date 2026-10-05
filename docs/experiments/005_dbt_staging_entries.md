@@ -44,9 +44,10 @@ uv run --env-file .env dbt build \
 # Tests
 
 1. Standard build
-    Expected: All 5 tests passed, view is created
-    Actual: Successfull build, view created 5 of 5 tests passed 
+    Expected: All 4 tests passed, view is created
+    Actual: Successfull build, view created 4 of 4 tests passed 
 
-2. Run with entry_id = 1
+2. Run with WHERE entry_id <> 1 inside view creation  
     Expected: FAIL 1 
     Actual: Build shown 1 failed test, fixing the issue doesn't rollback the view we should build again
+    After deleting where clause we performed another build with PASS=5 ERROR=0 result
