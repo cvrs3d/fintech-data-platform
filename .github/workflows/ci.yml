@@ -1,0 +1,75 @@
+name: Batch pipeline CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  batch-pipeline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    env:
+      POSTGRES_DB: fintech
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ci_test_password
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.23"
+
+      - name: Install Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Start PostgreSQL
+        run: docker compose up -d postgres
+
+      - name: Wait for PostgreSQL
+        timeout-minutes: 2
+        run: |
+            for attempt in {1..30}; do
+                if docker compose exec -T postgres \
+                    pg_isready -h 127.0.0.1 -p 5432 \
+                    -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
+                    exit 0
+                fi
+                sleep 2 
+            done
+
+            echo "PostgreSQL did not become ready"
+            docker compose logs postgres
+            exit 1
+
+      - name: Initialize database
+        run: |
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/001_source_schema.sql
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 < infra/sql/002_demo_data.sql
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/003_entries_identifiers.sql
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/004_transfer_requests.sql
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/005_raw_entries.sql
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/006_ingestion_runs.sql
+      - name: Load RAW
+        run: uv run --locked python ingestion/load_entries.py
+      - name: Build staging and test
+        run: |
+            uv run --locked dbt build \
+                --project-dir dbt  \
+                --profiles-dir dbt \
+                --select stg_entries
+
+      - name: Check pipeline counts
+        run: uv run --locked python tests/check_pipeline.py
+ 
