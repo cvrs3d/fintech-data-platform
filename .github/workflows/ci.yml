@@ -71,11 +71,11 @@ jobs:
                 --profiles-dir dbt \
                 --select stg_entries
 
-      - name: Check pipeline counts
-        run: uv run --locked python tests/check_pipeline.py
-      
       - name: Load customers and check repeat
         run: |
           uv run --locked python ingestion/load_customers.py
           uv run --locked python ingestion/load_customers.py
+
+      - name: Check pipeline counts
+        run: uv run --locked python tests/check_pipeline.py
   
