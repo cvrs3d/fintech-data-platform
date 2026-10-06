@@ -52,7 +52,7 @@ Airflow DAGs, orchestration, time-driven ingestion
     4. Alter tables: type `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/004_transfer_requests.sql`
     5. Create raw layer entries: type `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/005_raw_entries.sql`
     6. Create ops  `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/006_ingestion_runs.sql`
-    6. Create raw layer for customers `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/007_raw_customers.sql`
+    7. Create raw layer for customers `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/007_raw_customers.sql`
 
 4) Sync dependencies 
     `uv sync --locked` 
@@ -102,8 +102,8 @@ Airflow DAGs, orchestration, time-driven ingestion
     ```
     4. Ingest data into raw.entries 
     This command is idempotent 
-    `uv run python --locked ingestion/load_entries.py` 
+    `uv run --locked python ingestion/load_entries.py`
 
     5. Ingest data into raw.customers
     This command is idempotent 
-    `uv run python --locked ingestion/load_customers.py` 
+    `uv run --locked python ingestion/load_customers.py`
