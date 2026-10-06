@@ -27,7 +27,7 @@ def check_pipeline():
             """)
             record = cur.fetchone()
 
-            expected = (2, 2, 2)
+            expected = (2, 2, 2, 2, 2)
             if record != expected:
                 raise ValueError(
                     f"Unexpected counts: (source, raw, staging):"
