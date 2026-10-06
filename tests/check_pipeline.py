@@ -23,11 +23,13 @@ def check_pipeline():
                 SELECT
                     (SELECT COUNT(*) FROM source.entries) AS source_count,
                     (SELECT COUNT(*) FROM raw.entries) AS raw_count,
-                    (SELECT COUNT(*) FROM staging.stg_entries) AS staging_count
+                    (SELECT COUNT(*) FROM staging.stg_entries) AS staging_count,
+                    (SELECT COUNT(*) FROM source.customers) AS source_customer_count,
+                    (SELECT COUNT(*) FROM raw.customers) AS raw_customer_version_count
             """)
             record = cur.fetchone()
 
-            expected = (2, 2, 2)
+            expected = (2, 2, 2, 2, 2)
             if record != expected:
                 raise ValueError(
                     f"Unexpected counts: (source, raw, staging):"
