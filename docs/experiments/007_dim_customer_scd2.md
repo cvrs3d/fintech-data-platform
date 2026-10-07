@@ -22,7 +22,8 @@ customer_keys are preserved after build only if the same RAW is present
 1. Experiment where we create is_current=false with valid_to 
     Expected: 2 tests will fail
     Actual: Failed to tests
-    With restored pipeline all 8 tests passed 
-    
+    With restored pipeline 1 model and 7 tests passed
+    The interval were build upon inserted_at_dt (time when platform observed data)
+
 
 

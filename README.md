@@ -110,8 +110,8 @@ Airflow DAGs, orchestration, time-driven ingestion
 
     6. Build staging entries and dim_customer with dbt 
     ```bash
-    uv run --locked dbt build 
-    --project-dir dbt  
-    --profiles-dir dbt 
-    --select stg_entries dim_customer
+    uv run --locked --env-file .env dbt build \
+        --project-dir dbt \
+        --profiles-dir dbt \
+        --select stg_entries dim_customer
     ```
