@@ -63,13 +63,15 @@ jobs:
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/006_ingestion_runs.sql
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/007_raw_customers.sql
       - name: Load RAW
-        run: uv run --locked python ingestion/load_entries.py
+        run: | 
+          uv run --locked python ingestion/load_entries.py
+          uv run --locked python ingestion/load_customers.py
       - name: Build staging and test
         run: |
             uv run --locked dbt build \
                 --project-dir dbt  \
                 --profiles-dir dbt \
-                --select stg_entries
+                --select stg_entries dim_customer
 
       - name: Load customers and check repeat
         run: |
