@@ -107,3 +107,11 @@ Airflow DAGs, orchestration, time-driven ingestion
     5. Ingest data into raw.customers
     This command is idempotent 
     `uv run --locked python ingestion/load_customers.py`
+
+    6. Build staging entries and dim_customer with dbt 
+    ```bash
+    uv run --locked --env-file .env dbt build \
+        --project-dir dbt \
+        --profiles-dir dbt \
+        --select stg_entries dim_customer
+    ```

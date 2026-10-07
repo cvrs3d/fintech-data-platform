@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: dim_customer
+    description: "One row per observed version"
+
+    columns:
+      - name: customer_key
+        description: "Primary key, describes one row per one observed version"
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Single customer identifier"
+        data_tests:
+          - not_null
+      - name: valid_from
+        description: "SCD2 type field"
+        data_tests:
+          - not_null
+      - name: is_current
+        description: "Flag that shows current version per customer"
+        data_tests:
+          - not_null
