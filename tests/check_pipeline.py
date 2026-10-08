@@ -26,15 +26,28 @@ def check_pipeline():
                     (SELECT COUNT(*) FROM staging.stg_entries) AS staging_count,
                     (SELECT COUNT(*) FROM source.customers) AS source_customer_count,
                     (SELECT COUNT(*) FROM raw.customers) AS raw_customer_version_count,
+<<<<<<< HEAD
+                    (SELECT COUNT(*) FROM staging.dim_customer) AS dim_customer_count,
+                    (SELECT COUNT(*) FROM source.accounts) AS source_account_count,
+                    (SELECT COUNT(*) FROM raw.accounts) AS raw_account_version_count
+            """)
+            record = cur.fetchone()
+
+            expected = (2, 2, 2, 2, 2, 2, 2, 2)
+=======
                     (SELECT COUNT(*) FROM staging.dim_customer) AS dim_customer_count
             """)
             record = cur.fetchone()
 
             expected = (2, 2, 2, 2, 2, 2)
+>>>>>>> origin/main
             if record != expected:
                 raise ValueError(
-                    f"Unexpected counts: (source, raw, staging):"
-                    f"expected {expected}, got {record}"
+                    "Unexpected row counts "
+                    "(source.entries, raw.entries, staging.stg_entries, "
+                    "source.customers, raw.customers, staging.dim_customer, "
+                    "source.accounts, raw.accounts): "
+                    f"expected={expected}, actual={record}"
                 )
 
     print(f"Pipeline check passed: {record}")

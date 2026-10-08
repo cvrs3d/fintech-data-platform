@@ -53,6 +53,7 @@ Airflow DAGs, orchestration, time-driven ingestion
     5. Create raw layer entries: type `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/005_raw_entries.sql`
     6. Create ops  `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/006_ingestion_runs.sql`
     7. Create raw layer for customers `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/007_raw_customers.sql`
+    8. Create raw layer for customers `sudo docker compose exec -T postgres psql -U {username} -d {dbname} -v ON_ERROR_STOP=1 --single-transaction < infra/sql/008_raw_accounts.sql`
 
 4) Sync dependencies 
     `uv sync --locked` 
@@ -107,11 +108,3 @@ Airflow DAGs, orchestration, time-driven ingestion
     5. Ingest data into raw.customers
     This command is idempotent 
     `uv run --locked python ingestion/load_customers.py`
-
-    6. Build staging entries and dim_customer with dbt 
-    ```bash
-    uv run --locked --env-file .env dbt build \
-        --project-dir dbt \
-        --profiles-dir dbt \
-        --select stg_entries dim_customer
-    ```
