@@ -35,8 +35,11 @@ def check_pipeline():
             expected = (2, 2, 2, 2, 2, 2, 2, 2)
             if record != expected:
                 raise ValueError(
-                    f"Unexpected counts: (source, raw, staging):"
-                    f"expected {expected}, got {record}"
+                    "Unexpected row counts "
+                    "(source.entries, raw.entries, staging.stg_entries, "
+                    "source.customers, raw.customers, staging.dim_customer, "
+                    "source.accounts, raw.accounts): "
+                    f"expected={expected}, actual={record}"
                 )
 
     print(f"Pipeline check passed: {record}")
