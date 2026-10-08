@@ -47,6 +47,11 @@ def account_ingestion(cnn):
                 ORDER BY account_version_id DESC 
                 LIMIT 1""", (source_account_id, ))
                 raw_row = cur.fetchone()
+                if raw_row is not None and source_row[2] != raw_row[2]:
+                    raise ValueError(
+                        f"Account {source_account_id}: customer_id changed "
+                        f"from {raw_row[2]} to {source_row[2]}"
+                    )
                 if raw_row is not None and source_row[1:4] == raw_row[1:4]:
                     rows_skipped += 1
                     continue
