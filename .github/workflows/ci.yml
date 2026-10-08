@@ -62,6 +62,7 @@ jobs:
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/005_raw_entries.sql
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/006_ingestion_runs.sql
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/007_raw_customers.sql
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/008_raw_accounts.sql
       - name: Load entries
         run: | 
           uv run --locked python ingestion/load_entries.py
