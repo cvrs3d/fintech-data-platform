@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from load_entries import with_connection
 
 @with_connection
@@ -34,6 +34,12 @@ def account_ingestion(cnn):
             rows_read = len(source_rows)
 
             for source_row in source_rows:
+                # mocking updated row
+                # `if source_row[0] == 1:
+                #     mock_row = list(source_row)
+                #     mock_row[3] += timedelta(days=1) # registred at
+                #     mock_row[5] = datetime.now(timezone.utc) #updated_at
+                #     source_row = tuple(mock_row)
                 source_account_id = source_row[0]
                 cur.execute("""SELECT 
                 account_id, 
