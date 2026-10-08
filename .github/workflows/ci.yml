@@ -72,6 +72,11 @@ jobs:
           uv run --locked python ingestion/load_customers.py
           uv run --locked python ingestion/load_customers.py
           
+      - name: Load accounts and check repeat
+        run: |
+          uv run --locked python ingestion/load_accounts.py
+          uv run --locked python ingestion/load_accounts.py
+                
       - name: Build staging and test
         run: |
             uv run --locked dbt build \
