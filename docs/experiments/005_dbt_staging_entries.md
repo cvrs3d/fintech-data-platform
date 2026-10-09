@@ -9,11 +9,11 @@ We need dbt to build DWH layers for us automatically and run sql tests against d
 We are creating one view and we have 5 tests to check 
 
 # Setting up
-First install postgresql adapter for dbt 
+Install project dependencies from the lock file (this already includes `dbt-postgres`) 
 
 ```bash
-uv add dbt-postgres
-uv run dbt --version
+uv sync --locked
+uv run --locked dbt --version
 ```
 Then we have files dbt/dbt_project.yml and dbt/profiles.yml,  dbt/models/staging/_sources.yml 
 
