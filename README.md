@@ -48,9 +48,12 @@ Airflow DAGs, orchestration, time-driven ingestion
 3) Configure schemas and tables inside the container from `infra/sql` (run once for a fresh database)
     ```bash
     set -a; source .env; set +a
-    for file in infra/sql/*.sql; do
-      docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < "$file"
-    done
+    (
+      set -e
+      for file in infra/sql/*.sql; do
+        docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < "$file"
+      done
+    )
     ```
 
 4) Sync dependencies 
@@ -58,8 +61,31 @@ Airflow DAGs, orchestration, time-driven ingestion
 
 5) Test connection and demo entry 
     1. Connection: `uv run --locked python generator/check_connection.py` output should be similar to this: `('fintech', 'postgres')`
-    2. Create a demo transfer (every run creates new trnasfer) to check idempotency use same key for two consecutive runs: 
+    2. Ingest data into raw.entries 
+    This command is idempotent 
+    `uv run --locked python ingestion/load_entries.py`
 
+    3. Ingest data into raw.customers
+    This command is idempotent (run twice to verify) 
+    `uv run --locked python ingestion/load_customers.py`
+    `uv run --locked python ingestion/load_customers.py`
+
+    4. Ingest data into raw.accounts
+    This command is idempotent (run twice to verify) 
+    `uv run --locked python ingestion/load_accounts.py`
+    `uv run --locked python ingestion/load_accounts.py`
+
+    5. Build staging entries and dim_customer with dbt 
+    ```bash
+    uv run --locked --env-file .env dbt build \
+        --project-dir dbt \
+        --profiles-dir dbt \
+        --select stg_entries dim_customer
+    ```
+    6. Validate final row counts (clean pipeline check)
+    `uv run --locked python tests/check_pipeline.py`
+
+    7. Create a demo transfer (every run creates a new transfer):
     ```bash
     uv run python -c '
     from decimal import Decimal
@@ -72,7 +98,8 @@ Airflow DAGs, orchestration, time-driven ingestion
     print(transaction_id)
     '
     ```
-    3. Test idempotency 
+
+    8. Test transfer idempotency with the same key:
     ```bash
     uv run python - <<'PY'
     from concurrent.futures import ThreadPoolExecutor
@@ -99,26 +126,3 @@ Airflow DAGs, orchestration, time-driven ingestion
     print("Both calls returned the same transaction")
     PY
     ```
-    4. Ingest data into raw.entries 
-    This command is idempotent 
-    `uv run --locked python ingestion/load_entries.py`
-
-    5. Ingest data into raw.customers
-    This command is idempotent (run twice to verify) 
-    `uv run --locked python ingestion/load_customers.py`
-    `uv run --locked python ingestion/load_customers.py`
-
-    6. Ingest data into raw.accounts
-    This command is idempotent (run twice to verify) 
-    `uv run --locked python ingestion/load_accounts.py`
-    `uv run --locked python ingestion/load_accounts.py`
-
-    7. Build staging entries and dim_customer with dbt 
-    ```bash
-    uv run --locked --env-file .env dbt build \
-        --project-dir dbt \
-        --profiles-dir dbt \
-        --select stg_entries dim_customer
-    ```
-    8. Validate final row counts
-    `uv run --locked python tests/check_pipeline.py`
