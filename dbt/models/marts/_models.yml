@@ -22,3 +22,33 @@ models:
         description: "Flag that shows current version per customer"
         data_tests:
           - not_null
+  
+  - name: dim_account
+    description: "One row per observed version of account"
+
+    columns:
+      - name: account_key
+        description: "Primary key, version number"
+        data_tests:
+          - not_null
+          - unique
+      - name: account_id
+        description: "Account id from raw"
+        data_tests:
+          - not_null
+      - name: customer_id
+        description: "Id of a customer, who owns this account"
+        data_tests:
+          - not_null
+      - name: currency_id
+        description: "Currency id which is used to define currency type"
+        data_tests:
+          - not_null
+      - name: valid_from
+        description: "Technical SCD2 column"
+        data_tests:
+          - not_null
+      - name: is_current
+        description: "Technical column, depends on valid_to"
+        data_tests:
+          - not_null

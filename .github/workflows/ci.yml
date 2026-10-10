@@ -80,9 +80,9 @@ jobs:
       - name: Build staging and test
         run: |
             uv run --locked dbt build \
-                --project-dir dbt  \
-                --profiles-dir dbt \
-                --select stg_entries dim_customer
+              --project-dir dbt \
+              --profiles-dir dbt \
+              --select stg_entries dim_customer dim_account
 
       - name: Check pipeline counts
         run: uv run --locked python tests/check_pipeline.py
