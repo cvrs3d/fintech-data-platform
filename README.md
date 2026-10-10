@@ -80,7 +80,7 @@ Airflow DAGs, orchestration, time-driven ingestion
     uv run --locked --env-file .env dbt build \
         --project-dir dbt \
         --profiles-dir dbt \
-        --select stg_entries dim_customer
+        --select stg_entries dim_customer dim_account
     ```
     6. Validate final row counts (clean pipeline check)
     `uv run --locked python tests/check_pipeline.py`

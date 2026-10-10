@@ -8,3 +8,5 @@ sources:
         description: "Posted account movements loaded from the source."
       - name: customers
         description: "Observed versions of customer business attributes."
+      - name: accounts
+        description: "Observed versions of account"
