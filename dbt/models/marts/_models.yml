@@ -40,10 +40,15 @@ models:
         description: "Id of a customer, who owns this account"
         data_tests:
           - not_null
+
       - name: currency_id
         description: "Currency id which is used to define currency type"
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_currency')
+                field: currency_id
       - name: valid_from
         description: "Technical SCD2 column"
         data_tests:
@@ -52,3 +57,22 @@ models:
         description: "Technical column, depends on valid_to"
         data_tests:
           - not_null
+
+  - name: "dim_currency"
+    columns: 
+      - name: currency_key
+        description: "raw.currency id"
+        data_tests:
+          - not_null
+          - unique
+      - name: currency_id
+        description: "raw.currency.currency_id"
+        data_tests:
+          - not_null
+          - unique
+      - name: currency_code
+        description: "ISO currency code"
+        data_tests:
+          - not_null
+          - unique
+      
