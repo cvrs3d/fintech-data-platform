@@ -63,6 +63,7 @@ jobs:
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/006_ingestion_runs.sql
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/007_raw_customers.sql
             docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/008_raw_accounts.sql
+            docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction < infra/sql/009_raw_currency.sql
       - name: Load entries
         run: | 
           uv run --locked python ingestion/load_entries.py
@@ -76,13 +77,18 @@ jobs:
         run: |
           uv run --locked python ingestion/load_accounts.py
           uv run --locked python ingestion/load_accounts.py
+      
+      - name: Load currency and reapeat
+        run: |
+          uv run --locked python ingestion/load_currency.py
+          uv run --locked python ingestion/load_currency.py
                 
       - name: Build staging and test
         run: |
             uv run --locked dbt build \
               --project-dir dbt \
               --profiles-dir dbt \
-              --select stg_entries dim_customer dim_account
+              --select stg_entries dim_customer dim_account dim_currency
 
       - name: Check pipeline counts
         run: uv run --locked python tests/check_pipeline.py

@@ -29,17 +29,21 @@ def check_pipeline():
                     (SELECT COUNT(*) FROM staging.dim_customer) AS dim_customer_count,
                     (SELECT COUNT(*) FROM source.accounts) AS source_account_count,
                     (SELECT COUNT(*) FROM raw.accounts) AS raw_account_version_count,
-                    (SELECT COUNT(*) FROM staging.dim_account) AS dim_account_count
+                    (SELECT COUNT(*) FROM staging.dim_account) AS dim_account_count,
+                    (SELECT COUNT(*) FROM source.currency) AS source_currency_count,
+                    (SELECT COUNT(*) FROM raw.currency) AS raw_currency_count,
+                    (SELECT COUNT(*) FROM staging.dim_currency) AS dim_currency_count
             """)
             record = cur.fetchone()
 
-            expected = (2, 2, 2, 2, 2, 2, 2, 2, 2)
+            expected = (2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1)
             if record != expected:
                 raise ValueError(
                     "Unexpected row counts "
                     "(source.entries, raw.entries, staging.stg_entries, "
                     "source.customers, raw.customers, staging.dim_customer, "
-                    "source.accounts, raw.accounts, staging.dim_account): "
+                    "source.accounts, raw.accounts, staging.dim_account,"
+                    "source.currency, raw.currency, staging.dim_currency): "
                     f"expected={expected}, actual={record}"
                 )
 
