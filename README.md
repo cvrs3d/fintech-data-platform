@@ -75,17 +75,23 @@ Airflow DAGs, orchestration, time-driven ingestion
     `uv run --locked python ingestion/load_accounts.py`
     `uv run --locked python ingestion/load_accounts.py`
 
-    5. Build staging entries and dim_customer with dbt 
+    5. Ingest data into currency 
+    ```bash
+    uv run --locked python ingestion/load_currency.py
+    uv run --locked python ingestion/load_currency.py
+    ```
+
+    6. Build staging entries and dim_customer with dbt 
     ```bash
     uv run --locked --env-file .env dbt build \
         --project-dir dbt \
         --profiles-dir dbt \
-        --select stg_entries dim_customer dim_account
+        --select stg_entries dim_customer dim_account dim_currency
     ```
-    6. Validate final row counts (clean pipeline check)
+    7. Validate final row counts (clean pipeline check)
     `uv run --locked python tests/check_pipeline.py`
 
-    7. Create a demo transfer (every run creates a new transfer):
+    8. Create a demo transfer (every run creates a new transfer):
     ```bash
     uv run python -c '
     from decimal import Decimal
