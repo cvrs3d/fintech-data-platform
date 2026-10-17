@@ -1,6 +1,6 @@
 CREATE TABLE source.customer_history (
     source_customer_version_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    customer_id INT ,
+    customer_id INT NOT NULL,
     first_name VARCHAR(50) NOT NULL, -- first name of a client should be long in case of nation specific long name like african
     last_name VARCHAR(50) NOT NULL, -- last name
     birth_date DATE NOT NULL, -- birth date
