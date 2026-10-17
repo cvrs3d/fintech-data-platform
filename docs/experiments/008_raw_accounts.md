@@ -1,5 +1,9 @@
 # Problem
 
+> Historical experiment: this describes the earlier observation-based implementation.
+> For the current source-history pipeline and interval semantics, see
+> [Source history for customers and accounts](010_source_history.md).
+
 Created a raw layer for observed versions of accounts 
 
 # Grain
