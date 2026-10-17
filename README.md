@@ -6,21 +6,34 @@ The purpose of this project is to create simple data platform for fintech DWH in
 
 ## Current functionality
 
-Created PostgreSQL (Source schema), atomic creation of transfers, testing of rollback. 
-RAW layer and ingestion  developed.
+PostgreSQL source tables support atomic transfers and transfer idempotency.
+Python batch loaders populate RAW and track run status and counters in
+`ops.ingestion_runs`.
 
-dbt is initialized and working, users can now run from projects root directory
+Customer and account triggers capture source history. Their loaders ingest each
+source version once, and dbt builds SCD2 dimensions using source effective time.
+Initial snapshots establish the start of known history; they do not reconstruct
+earlier states. Legacy RAW versions are retained but excluded from these
+dimensions.
+
+The currency loader maintains a fixed reference table. A changed code for an
+existing currency ID fails the run and is recorded in quarantine.
+
+dbt builds `stg_entries`, `dim_customer`, `dim_account` and `dim_currency`.
+See [Source history for customers and accounts](docs/experiments/010_source_history.md)
+for the versioning contract, migration details and experiments.
+
+Run from the project root:
 
 ```bash
-uv run --env-file .env dbt debug \
+uv run --locked --env-file .env dbt debug \
   --project-dir dbt \
   --profiles-dir dbt
 
-uv run --env-file .env dbt build \
+uv run --locked --env-file .env dbt build \
   --project-dir dbt \
   --profiles-dir dbt \
-  --select stg_entries
-
+  --select stg_entries dim_customer dim_account dim_currency
 ```
 
 ## TODO
@@ -81,15 +94,19 @@ Airflow DAGs, orchestration, time-driven ingestion
     uv run --locked python ingestion/load_currency.py
     ```
 
-    6. Build staging entries and dim_customer with dbt 
+    6. Build staging entries and dimensions with dbt
     ```bash
     uv run --locked --env-file .env dbt build \
         --project-dir dbt \
         --profiles-dir dbt \
         --select stg_entries dim_customer dim_account dim_currency
     ```
-    7. Validate final row counts (clean pipeline check)
+    7. Validate row counts and ingestion run counters (clean pipeline check)
     `uv run --locked python tests/check_pipeline.py`
+
+    This check expects a fresh database and exactly two customer and account
+    loader runs, as shown above. Additional historical versions or ingestion
+    runs on a development database will change the expected results.
 
     8. Create a demo transfer (every run creates a new transfer):
     ```bash

@@ -22,36 +22,36 @@ def customer_ingestion(cnn):
             ) VALUES (%s, %s, %s, %s, %s, %s, %s)""", (ingestion_run_id, "RUNNING", rows_read, rows_saved, rows_skipped, "source_customers_to_raw", datetime.now(timezone.utc)))
         cnn.commit()
         try:
-            cur.execute("""SELECT customer_id, 
-            first_name, 
-            last_name, 
-            birth_date, 
-            death_date, 
-            registered_at_dt,
-            updated_at_dt,
-            created_at_dt
-            FROM source.customers""")
+            cur.execute("""SELECT
+                customer_id,
+                first_name,
+                last_name,
+                birth_date,
+                death_date,
+                registered_at_dt,
+                updated_at_dt,
+                created_at_dt,
+                source_customer_version_id,
+                effective_from_dt AS source_effective_from_dt
+            FROM source.customer_history
+            ORDER BY source_customer_version_id;"""
+            )
             source_rows = cur.fetchall()
             rows_read = len(source_rows)
 
             for source_row in source_rows:
-                source_customer_id = source_row[0]
-                cur.execute("""SELECT customer_id,
-                first_name, 
-                last_name, 
-                birth_date, 
-                death_date, 
-                registered_at_dt,
-                updated_at_dt,
-                created_at_dt
-                FROM raw.customers WHERE customer_id = %s ORDER BY customer_version_id DESC LIMIT 1""", (source_customer_id, ))
-                raw_row = cur.fetchone()
-                if raw_row is not None and source_row[1:6] == raw_row[1:6]:
+                cur.execute("""
+                    SELECT 1
+                    FROM raw.customers
+                    WHERE source_customer_version_id = %s
+                """, (source_row[8],))
+
+                if cur.fetchone() is not None:
                     rows_skipped += 1
                     continue
                 # Here land all clients new and changed
-                cur.execute(
-                    """INSERT INTO raw.customers (
+                cur.execute("""
+                    INSERT INTO raw.customers (
                         customer_id,
                         first_name,
                         last_name,
@@ -60,11 +60,13 @@ def customer_ingestion(cnn):
                         registered_at_dt,
                         updated_at_dt,
                         created_at_dt,
+                        source_customer_version_id,
+                        source_effective_from_dt,
                         ingestion_run_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (*source_row, ingestion_run_id),
-                )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (*source_row, ingestion_run_id))
+
                 rows_saved += 1
             # Update ops. runs
             cur.execute(

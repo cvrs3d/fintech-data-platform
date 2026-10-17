@@ -1,5 +1,9 @@
 # Problem
 
+> Historical experiment: this describes the earlier observation-based implementation.
+> For the current source-history pipeline and interval semantics, see
+> [Source history for customers and accounts](010_source_history.md).
+
 We need to create SCD2 type table for staging layer, so we can run audit and analysis
 
 # Grain 
