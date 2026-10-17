@@ -87,8 +87,8 @@ def account_ingestion(cnn):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (*source_row, ingestion_run_id),
-            )
-            rows_saved += 1
+                )
+                rows_saved += 1
             # Update ops. runs
             cur.execute(
                 """
