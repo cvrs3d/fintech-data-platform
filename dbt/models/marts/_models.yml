@@ -5,6 +5,11 @@ models:
     description: "One row per observed version"
 
     columns:
+      - name: source_customer_version_id
+        description: "Version identifier from source.customer_history"
+        data_tests:
+          - not_null
+          - unique
       - name: customer_key
         description: "Primary key, describes one row per one observed version"
         data_tests:
