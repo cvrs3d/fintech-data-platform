@@ -27,6 +27,12 @@ models:
     description: "One row per observed version of account"
 
     columns:
+      - name: source_account_version_id
+        description: "Account version identifier from source.account_history"
+        data_tests:
+          - not_null
+          - unique
+
       - name: account_key
         description: "Primary key, version number"
         data_tests:
