@@ -1,0 +1,60 @@
+version: 2
+
+unit_tests:
+  - name: fact_entries_selects_versions_at_execution_time
+    description: >-
+      Preserve entries before history and select account and customer versions
+      independently using half-open effective intervals at execution time.
+    model: fact_entries
+    given:
+      - input: ref('stg_entries')
+        rows:
+          # Before both histories: retain the entry with unresolved keys.
+          - {entry_id: 1, account_id: 1, executed_at_dt: '2026-09-30 00:00:00+00:00'}
+          # Inside both historical versions.
+          - {entry_id: 2, account_id: 1, executed_at_dt: '2026-10-03 00:00:00+00:00'}
+          # Customer changes while the account version stays the same.
+          - {entry_id: 3, account_id: 1, executed_at_dt: '2026-10-05 00:00:00+00:00'}
+          # Exact account boundary: only the next account version matches.
+          - {entry_id: 4, account_id: 1, executed_at_dt: '2026-10-10 00:00:00+00:00'}
+
+      - input: ref('dim_account')
+        rows:
+          - account_id: 1
+            account_key: 101
+            customer_id: 10
+            currency_id: 1
+            valid_from: '2026-10-01 00:00:00+00:00'
+            valid_to: '2026-10-10 00:00:00+00:00'
+            is_current: false
+          - account_id: 1
+            account_key: 102
+            customer_id: 10
+            currency_id: 1
+            valid_from: '2026-10-10 00:00:00+00:00'
+            valid_to: null
+            is_current: true
+
+      - input: ref('dim_customer')
+        rows:
+          - customer_id: 10
+            customer_key: 201
+            valid_from: '2026-10-01 00:00:00+00:00'
+            valid_to: '2026-10-05 00:00:00+00:00'
+            is_current: false
+          - customer_id: 10
+            customer_key: 202
+            valid_from: '2026-10-05 00:00:00+00:00'
+            valid_to: null
+            is_current: true
+
+      - input: ref('dim_currency')
+        rows:
+          - {currency_id: 1, currency_key: 301}
+
+    expect:
+      rows:
+        - {entry_id: 1, account_key: null, customer_id: null, customer_key: null, currency_id: null, currency_key: null}
+        - {entry_id: 2, account_key: 101, customer_id: 10, customer_key: 201, currency_id: 1, currency_key: 301}
+        - {entry_id: 3, account_key: 101, customer_id: 10, customer_key: 202, currency_id: 1, currency_key: 301}
+        - {entry_id: 4, account_key: 102, customer_id: 10, customer_key: 202, currency_id: 1, currency_key: 301}
