@@ -12,8 +12,8 @@ def with_connection(f):
         password = os.environ["POSTGRES_PASSWORD"]
 
         cnn = psycopg.connect(
-            host="127.0.0.1",
-            port=5432,
+            host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
             dbname=dbname,
             user=user,
             password=password,

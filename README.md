@@ -29,6 +29,11 @@ currency key. It reports entry counts, incoming and outgoing amounts, and net
 movement. Groups with an unresolved currency retain their entry counts and have
 NULL monetary totals.
 
+Airflow runs the four loaders sequentially and then builds the daily mart and
+its dbt dependencies. A separate Compose overlay uses LocalExecutor, an Airflow
+metadata database and the existing PostgreSQL service. Pipeline dependencies
+are installed in a separate virtual environment inside the Airflow image.
+
 See [Source history for customers and accounts](docs/experiments/010_source_history.md)
 for the versioning contract and
 [Fact entries and temporal dimension joins](docs/experiments/011_fact_entries.md)
@@ -49,9 +54,15 @@ uv run --locked --env-file .env dbt build \
   --select +mart_account_daily
 ```
 
-## TODO
-Airflow DAGs, orchestration, time-driven ingestion
+## Airflow
 
+See [Airflow batch orchestration](docs/experiments/013_airflow_batch.md) for
+one-time metadata database setup, image building, startup, UI access and DAG
+operation. Complete the PostgreSQL setup below before starting Airflow.
+
+The DAG supports manual runs and an hourly schedule. Every run scans the source
+tables and skips already ingested entries or source versions; it does not filter
+data by Airflow's scheduling interval.
 
 ## Setup
 

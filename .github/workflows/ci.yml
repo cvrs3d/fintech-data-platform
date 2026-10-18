@@ -23,6 +23,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Validate Airflow Compose configuration
+        env:
+          # Public test values used only to validate configuration.
+          AIRFLOW_DB_PASSWORD: ci_airflow_password
+          AIRFLOW_JWT_SECRET: ci_airflow_jwt_secret
+          AIRFLOW_API_SECRET_KEY: ci_airflow_api_secret
+          AIRFLOW_FERNET_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        run: >-
+          docker compose
+          -f docker-compose.yml
+          -f docker-compose.airflow.yml
+          config --quiet
+
       - name: Install uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
