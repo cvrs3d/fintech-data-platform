@@ -87,12 +87,12 @@ jobs:
           uv run --locked python ingestion/load_currency.py
           uv run --locked python ingestion/load_currency.py
                 
-      - name: Build staging and test
+      - name: Build marts and test
         run: |
-            uv run --locked dbt build \
-              --project-dir dbt \
-              --profiles-dir dbt \
-              --select +fact_entries
+          uv run --locked dbt build \
+            --project-dir dbt \
+            --profiles-dir dbt \
+            --select +mart_account_daily
 
       - name: Check pipeline counts
         run: uv run --locked python tests/check_pipeline.py

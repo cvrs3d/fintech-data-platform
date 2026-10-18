@@ -113,6 +113,11 @@ in staging and the fact with a FULL OUTER JOIN. Missing and unexpected IDs fail
 the test. Combined with uniqueness checks, this verifies one fact row per
 staging entry.
 
+The unit test `fact_entries_selects_versions_at_execution_time` in
+`dbt/models/marts/fact_entries_unit_tests.yml` uses mocked inputs to check
+pre-history entries, historical version selection, independent customer
+changes, and the exact boundaries between account and customer versions.
+
 ## Build and CI expectations
 
 Run from the project root after ingesting the required source data:
@@ -124,8 +129,11 @@ uv run --locked --env-file .env dbt build \
   --select +fact_entries
 ```
 
-The leading `+` includes all upstream models. CI uses the same selection with
-credentials supplied through environment variables, without `--env-file .env`.
+The leading `+` includes all upstream models. The full pipeline selection is
+now `+mart_account_daily`, which also builds and tests this fact and its parents.
+CI supplies credentials through environment variables, without `--env-file .env`.
+See [Daily account activity mart](012_mart_account_daily.md) for the full build
+command and expected mart output.
 
 The clean CI fixture contains two entries created before the history snapshots.
 The expected fact count is therefore two, with unresolved dimension keys.

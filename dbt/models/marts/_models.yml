@@ -1,6 +1,19 @@
 version: 2
 
 models:
+  - name: mart_account_daily
+    description: "Daily account activity by UTC date and currency."
+    columns:
+      - name: activity_date
+        data_tests:
+          - not_null
+      - name: account_id
+        data_tests:
+          - not_null
+      - name: entries_count
+        data_tests:
+          - not_null
+
   - name: fact_entries
     description: "One row per entry, linked to dimension versions at execution time."
     columns:

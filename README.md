@@ -19,15 +19,22 @@ dimensions.
 The currency loader maintains a fixed reference table. A changed code for an
 existing currency ID fails the run and is recorded in quarantine.
 
-dbt builds `stg_entries`, `dim_customer`, `dim_account`, `dim_currency` and
-`fact_entries`. The fact retains one row per entry and resolves account and
-customer versions at `executed_at_dt`. Entries without matching history remain
+dbt builds `stg_entries`, `dim_customer`, `dim_account`, `dim_currency`,
+`fact_entries` and `mart_account_daily`. The fact retains one row per entry and
+resolves account and customer versions at `executed_at_dt`. Entries without matching history remain
 in the fact with unresolved dimension keys.
+
+The daily mart groups entries by UTC execution date, business account ID and
+currency key. It reports entry counts, incoming and outgoing amounts, and net
+movement. Groups with an unresolved currency retain their entry counts and have
+NULL monetary totals.
 
 See [Source history for customers and accounts](docs/experiments/010_source_history.md)
 for the versioning contract and
 [Fact entries and temporal dimension joins](docs/experiments/011_fact_entries.md)
 for the fact model, missing-history behavior and validation results.
+See [Daily account activity mart](docs/experiments/012_mart_account_daily.md)
+for aggregation rules, data-quality checks and CI expectations.
 
 Run from the project root:
 
@@ -39,7 +46,7 @@ uv run --locked --env-file .env dbt debug \
 uv run --locked --env-file .env dbt build \
   --project-dir dbt \
   --profiles-dir dbt \
-  --select +fact_entries
+  --select +mart_account_daily
 ```
 
 ## TODO
@@ -100,12 +107,12 @@ Airflow DAGs, orchestration, time-driven ingestion
     uv run --locked python ingestion/load_currency.py
     ```
 
-    6. Build staging entries, dimensions and fact with dbt
+    6. Build staging entries, dimensions, fact and daily mart with dbt
     ```bash
     uv run --locked --env-file .env dbt build \
         --project-dir dbt \
         --profiles-dir dbt \
-        --select +fact_entries
+        --select +mart_account_daily
     ```
     7. Validate row counts and ingestion run counters (clean pipeline check)
     `uv run --locked python tests/check_pipeline.py`
