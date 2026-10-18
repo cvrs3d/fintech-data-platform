@@ -19,9 +19,15 @@ dimensions.
 The currency loader maintains a fixed reference table. A changed code for an
 existing currency ID fails the run and is recorded in quarantine.
 
-dbt builds `stg_entries`, `dim_customer`, `dim_account` and `dim_currency`.
+dbt builds `stg_entries`, `dim_customer`, `dim_account`, `dim_currency` and
+`fact_entries`. The fact retains one row per entry and resolves account and
+customer versions at `executed_at_dt`. Entries without matching history remain
+in the fact with unresolved dimension keys.
+
 See [Source history for customers and accounts](docs/experiments/010_source_history.md)
-for the versioning contract, migration details and experiments.
+for the versioning contract and
+[Fact entries and temporal dimension joins](docs/experiments/011_fact_entries.md)
+for the fact model, missing-history behavior and validation results.
 
 Run from the project root:
 
@@ -33,7 +39,7 @@ uv run --locked --env-file .env dbt debug \
 uv run --locked --env-file .env dbt build \
   --project-dir dbt \
   --profiles-dir dbt \
-  --select stg_entries dim_customer dim_account dim_currency
+  --select +fact_entries
 ```
 
 ## TODO
@@ -94,12 +100,12 @@ Airflow DAGs, orchestration, time-driven ingestion
     uv run --locked python ingestion/load_currency.py
     ```
 
-    6. Build staging entries and dimensions with dbt
+    6. Build staging entries, dimensions and fact with dbt
     ```bash
     uv run --locked --env-file .env dbt build \
         --project-dir dbt \
         --profiles-dir dbt \
-        --select stg_entries dim_customer dim_account dim_currency
+        --select +fact_entries
     ```
     7. Validate row counts and ingestion run counters (clean pipeline check)
     `uv run --locked python tests/check_pipeline.py`

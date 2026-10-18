@@ -1,6 +1,52 @@
 version: 2
 
 models:
+  - name: fact_entries
+    description: "One row per entry, linked to dimension versions at execution time."
+    columns:
+      - name: entry_id
+        data_tests:
+          - not_null
+          - unique
+
+      - name: transaction_id
+        data_tests:
+          - not_null
+
+      - name: account_id
+        data_tests:
+          - not_null
+
+      - name: amount
+        data_tests:
+          - not_null
+
+      - name: executed_at_dt
+        data_tests:
+          - not_null
+
+      - name: account_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_account')
+                field: account_key
+
+      - name: customer_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_key
+
+      - name: currency_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_currency')
+                field: currency_key
+
+
   - name: dim_customer
     description: "One row per observed version"
 

@@ -92,7 +92,7 @@ jobs:
             uv run --locked dbt build \
               --project-dir dbt \
               --profiles-dir dbt \
-              --select stg_entries dim_customer dim_account dim_currency
+              --select +fact_entries
 
       - name: Check pipeline counts
         run: uv run --locked python tests/check_pipeline.py

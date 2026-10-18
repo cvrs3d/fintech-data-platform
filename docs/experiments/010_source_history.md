@@ -9,8 +9,8 @@ platform observed a version.
 
 Source history now records each insert and each tracked attribute change.
 Loaders consume these version records, and dimensions use their effective
-timestamps. This prepares the data for selecting dimension versions at an
-entry's `executed_at_dt`; the fact model and temporal joins are a later step.
+timestamps. The [fact entries model](011_fact_entries.md) uses this history to
+select account and customer versions at each entry's `executed_at_dt`.
 
 ## Source capture
 
@@ -144,7 +144,8 @@ account 2 retained one version.
 ## CI contract
 
 CI initializes a fresh database, applies migrations through 013, runs each
-customer and account loader twice, builds the four dbt models, and runs
+customer and account loader twice, builds the dimensions, staging entries and
+fact entries, and runs
 `tests/check_pipeline.py`.
 
 The clean database is expected to contain two rows in each customer and account
@@ -174,4 +175,5 @@ match these clean-database expectations.
   Concurrent source changes and transfers need an explicit ordering contract
   before exact temporal matching can be guaranteed.
 - Events before an entity's initial snapshot have no authoritative version in
-  this history. A future fact model must make this lack of coverage explicit.
+  this history. The fact model preserves these entries with unresolved
+  dimension keys; see [Fact entries and temporal dimension joins](011_fact_entries.md).
