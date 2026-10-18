@@ -35,16 +35,19 @@ def check_pipeline():
                     (SELECT COUNT(*) FROM staging.dim_currency) AS dim_currency_count,
                     (SELECT COUNT(*) FROM source.account_history) AS source_account_history_count,
                     (SELECT COUNT(*) FROM source.customer_history) AS source_customer_history_count,
-                    (SELECT COUNT(*) FROM staging.fact_entries) AS fact_entries_count
+                    (SELECT COUNT(*) FROM staging.fact_entries) AS fact_entries_count,
+                    (SELECT COUNT(*) FROM staging.mart_account_daily) AS mart_account_daily_count
             """)
             record = cur.fetchone()
 
             expected = (
-                2, 2, 2,  # entries: source, raw, staging
-                2, 2, 2,  # customers: source, raw, dimension
-                2, 2, 2,  # accounts: source, raw, dimension
-                1, 1, 1,  # currency: source, raw, dimension
-                2, 2, 2   # source.account_history, source.customer_history, staging.fact_entries
+                2, 2, 2,     # entries: source, raw, staging
+                2, 2, 2,     # customers: source, raw, dimension
+                2, 2, 2,     # accounts: source, raw, dimension
+                1, 1, 1,     # currency: source, raw, dimension
+                2, 2,       # account_history, customer_history
+                2,          # fact_entries
+                2,          # mart_account_daily
             )
             if record != expected:
                 raise ValueError(
@@ -53,7 +56,8 @@ def check_pipeline():
                     "source.customers, raw.customers, staging.dim_customer, "
                     "source.accounts, raw.accounts, staging.dim_account,"
                     "source.currency, raw.currency, staging.dim_currency, "
-                    "source.account_history, source.customer_history, staging.fact_entries): "
+                    "source.account_history, source.customer_history, staging.fact_entries,"
+                    "staging.mart_account_daily): "
                     f"expected={expected}, actual={record}"
                 )
             expected_runs = [
