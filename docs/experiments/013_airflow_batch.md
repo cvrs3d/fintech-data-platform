@@ -4,8 +4,9 @@
 
 Run the existing ingestion and dbt pipeline through one DAG, `fintech_batch`.
 The first manual run completed all five tasks successfully on the development
-VM. Scheduled execution and recovery from deliberately injected failures have
-not yet been verified.
+VM. Subsequent validation confirmed scheduled runs and automatic task retries.
+The retry exercise exposed an API database connection-pool limit; the API pool
+was increased, and the repeated exercise completed the loader on attempt 2.
 
 ## Runtime layout
 
@@ -28,6 +29,13 @@ The [Dockerfile](../../infra/airflow/Dockerfile) uses
 `apache/airflow:3.3.2-python3.13` and uv `0.12.23`. It installs the locked project
 dependencies in `/opt/fintech/.venv`, separately from Airflow's environment.
 The verified image contains dbt Core `1.12.5` and dbt-postgres `1.11.0`.
+
+The API server overrides the shared metadata database pool settings with
+`AIRFLOW__DATABASE__SQL_ALCHEMY_POOL_SIZE=5` and
+`AIRFLOW__DATABASE__SQL_ALCHEMY_MAX_OVERFLOW=10`. This permits up to 15 concurrent
+connections per pool. Other services retain the shared limits of 2 and 1.
+The API's environment block merges `*airflow-environment` before overriding
+these two values, preserving the shared database and authentication settings.
 
 Connection settings support both host and container execution:
 
@@ -217,8 +225,10 @@ version IDs are skipped; currency keeps its fixed-reference validation. The DAG
 does not pass a date window to the loaders, so an hourly schedule is not an
 incremental extraction strategy and historical backfills are not implemented.
 
-Each loader attempt writes its own `ops.ingestion_runs` record. A task retry
-therefore creates another ingestion run rather than reusing the failed run's ID.
+Each loader invocation that reaches audit logging creates its own
+`ops.ingestion_runs` record with a new run ID. A task failure before the loader
+starts does not create a failed ingestion record; its evidence is in Airflow's
+logs and task state.
 The complete DAG is not one database transaction: earlier successful loader
 commits remain if a later task fails. Existing loader rollback, quarantine and
 deduplication behavior still applies.
@@ -249,19 +259,62 @@ Verified on the development VM:
 - Initialization exits successfully and all three long-running Airflow services
   report healthy.
 - The first manual `fintech_batch` run completes all five tasks successfully.
+- By the morning of 2026-10-19, 19 successful scheduled runs were reported.
+- An injected task failure is retried automatically. After the API pool change,
+  `load_customers` completes on attempt 2 with exit code 0.
 
 The VM has an ARM64 CPU and approximately 3.7 GiB of RAM. The three Airflow
-services used approximately 650 MiB combined while idle in the observed sample.
-Peak memory during task execution has not been measured.
+services used approximately 650 MiB combined in the initial idle sample, before
+the API pool adjustment. Peak memory during task execution has not been measured.
 
 [CI](../../.github/workflows/ci.yml) validates the combined Compose configuration
 using public test values, then runs the existing batch pipeline against a fresh
 PostgreSQL database. It does not build the Airflow image or start an Airflow DAG.
-Scheduled execution and failure recovery remain separate runtime checks.
+Scheduled execution and task retry behavior were checked on the VM; these checks
+are not automated in CI.
 
 `tests/check_pipeline.py` expects the clean CI fixture and exactly two customer
 and account ingestion runs. It is not a DAG task and is not a general health
 check for the development database after repeated Airflow runs.
+
+### Retry exercise and API pool adjustment: 2026-10-19
+
+For the exercise, `load_customers` temporarily used a Boolean DAG parameter,
+`test_fail_once`, defaulting to `False`. A manual run set it to `True`; a Bash
+guard exited with code 1 only when `ti.try_number == 1`. Later attempts ran the
+normal ingestion command. Scheduled runs kept the default parameter value.
+
+The first test run was
+`manual__2026-10-19T07:49:32.849737+00:00`. Attempt 2 contained only a
+`Pre Execute` message in its task log. The scheduler log showed an
+`httpx.ReadTimeout` while registering the task start with the Execution API,
+followed by `UP_FOR_RETRY`. The API log also contained HTTP 500 responses and:
+
+```text
+QueuePool limit of size 2 overflow 1 reached,
+connection timed out, timeout 30.00
+```
+
+Pool exhaustion was the likely cause of the API delays; these logs do not show
+which requests held all the connections. Attempt 3 completed successfully, and
+the full DAG run was reported successful. Scheduler logs show that
+`load_accounts` started after `load_customers` succeeded.
+
+The API service's pool was then increased from 2 + 1 to 5 + 10, preserving the
+other shared environment settings. Applying this Compose change requires
+recreating the API container after active runs finish; the pipeline image does
+not need rebuilding.
+
+In the new test run, `manual__2026-10-19T09:21:05.634858+00:00`,
+`load_customers` completed on attempt 2 at 09:22:13 UTC with exit code 0.
+The repeated test therefore achieved the expected task retry outcome after the
+configuration change.
+
+The injected failure happens before Python starts. It validates Airflow retry
+and dependency handling, but does not exercise rollback after partial database
+writes. Ingestion transaction behavior is a separate check. Remove the temporary
+parameter and Bash guard after the exercise, retaining the normal retry settings
+and the API pool override.
 
 ## References
 
@@ -269,3 +322,4 @@ check for the development database after repeated Airflow runs.
 - [LocalExecutor](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/executor/local.html)
 - [SimpleAuthManager](https://airflow.apache.org/docs/apache-airflow/3.3.2/core-concepts/auth-manager/simple/index.html)
 - [Airflow database setup](https://airflow.apache.org/docs/apache-airflow/3.3.2/howto/set-up-database.html)
+- [Airflow configuration reference](https://airflow.apache.org/docs/apache-airflow/3.3.2/configurations-ref.html)

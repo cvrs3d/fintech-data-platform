@@ -29,9 +29,7 @@ with DAG(
 
     load_customers = BashOperator(
         task_id="load_customers",
-        bash_command=(
-            "/opt/fintech/.venv/bin/python ingestion/load_customers.py"
-        ),
+        bash_command="/opt/fintech/.venv/bin/python ingestion/load_customers.py",
         cwd="/opt/fintech",
         do_xcom_push=False,
     )
