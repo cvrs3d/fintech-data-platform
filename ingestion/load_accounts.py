@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone, timedelta
-from load_entries import with_connection
+from infra import with_connection
 
 @with_connection
 def account_ingestion(cnn):

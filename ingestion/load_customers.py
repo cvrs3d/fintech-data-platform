@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from load_entries import with_connection
+from infra import with_connection
 
 @with_connection
 def customer_ingestion(cnn):
