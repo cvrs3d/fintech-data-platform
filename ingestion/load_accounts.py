@@ -1,27 +1,12 @@
 import uuid
-from datetime import datetime, timezone, timedelta
-from infra import with_connection
+import psycopg
+from  runtime import RunContext, run_pipeline
+from infra import create_connection, utc_now
 
-@with_connection
-def account_ingestion(cnn):
-    
-    ingestion_run_id = uuid.uuid4()
-    rows_read = 0
-    rows_skipped = 0
-    rows_saved = 0
+
+def account_ingestion(cnn: psycopg.Connection, context: RunContext) -> None:
 
     with cnn.cursor() as cur:
-        cur.execute("""INSERT INTO ops.ingestion_runs (
-            ingestion_run_id,
-            run_status, 
-            rows_read, 
-            rows_saved, 
-            rows_skipped, 
-            pipeline_name, 
-            start_time_dt
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)""", (ingestion_run_id, "RUNNING", rows_read, rows_saved, rows_skipped, "source_accounts_to_raw", datetime.now(timezone.utc)))
-        cnn.commit()
-        try:
             cur.execute("""SELECT
                 account_id,
                 currency_id,
@@ -34,7 +19,7 @@ def account_ingestion(cnn):
             FROM source.account_history
             ORDER BY source_account_version_id""")
             source_rows = cur.fetchall()
-            rows_read = len(source_rows)
+            context.stats.rows_read = len(source_rows)
 
             for source_row in source_rows:
                 # mocking updated row
@@ -50,7 +35,7 @@ def account_ingestion(cnn):
                 """, (source_row[6],),
                 )
                 if cur.fetchone() is not None: 
-                    rows_skipped += 1
+                    context.stats.rows_skipped += 1
                     continue
                 source_account_id = source_row[0]
                 cur.execute("""SELECT 
@@ -86,42 +71,16 @@ def account_ingestion(cnn):
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                (*source_row, ingestion_run_id),
+                (*source_row, context.ingestion_run_id),
                 )
-                rows_saved += 1
-            # Update ops. runs
-            cur.execute(
-                """
-                UPDATE ops.ingestion_runs
-                SET run_status = 'SUCCESS',
-                    rows_read = %s,
-                    rows_saved = %s,
-                    rows_skipped = %s,
-                    end_time_dt = %s
-                WHERE ingestion_run_id = %s
-                """,
-                (
-                    rows_read,
-                    rows_saved,
-                    rows_skipped,
-                    datetime.now(timezone.utc),
-                    ingestion_run_id,
-                ),
-            )
-            cnn.commit()
-        except Exception as error:
-            cnn.rollback()
-            cur.execute("""UPDATE ops.ingestion_runs 
-            SET run_status = 'FAILED', 
-            rows_saved = 0,
-            rows_skipped = %s,
-            rows_read = %s,
-            end_time_dt = %s,
-            error_cause = %s
-            WHERE ingestion_run_id = %s""", (rows_skipped, rows_read, datetime.now(timezone.utc), str(error), ingestion_run_id,))
-            cnn.commit()
-            raise 
+                context.stats.rows_saved += 1
 
 
 if __name__ == "__main__":
-    account_ingestion()
+    run_pipeline(
+        name="source_accounts_to_raw",
+        connection_factory=create_connection,
+        time_function=utc_now,
+        uuid_gen=uuid.uuid4,
+        pipeline=account_ingestion
+    )

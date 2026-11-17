@@ -109,4 +109,14 @@ jobs:
 
       - name: Check pipeline counts
         run: uv run --locked python tests/check_pipeline.py
+      
+      - name: Test ingestion runtime
+        env:
+          PYTHONPATH: ingestion
+        run: |
+          uv run --locked python -m tests.test_ingestion_runtime
+          uv run --locked python -m tests.test_connection_runtime
+          uv run --locked python -m tests.test_currency_quarantine
+          uv run --locked python -m tests.test_currency_quarantine_failure
+          uv run --locked python -m tests.test_accounts_repeat
   
