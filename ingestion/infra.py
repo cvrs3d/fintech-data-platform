@@ -1,25 +1,34 @@
+import os
+from functools import wraps
+from datetime import datetime, timezone
+import dotenv
 import psycopg
-import os 
-import dotenv 
 
-def with_connection(f):
-    def with_connection_(*args, **kwargs):
-        dotenv.load_dotenv()
-        dbname = os.environ["POSTGRES_DB"]
-        user = os.environ["POSTGRES_USER"]
-        password = os.environ["POSTGRES_PASSWORD"]
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
-        cnn = psycopg.connect(
-            host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
-            port=int(os.environ.get("POSTGRES_PORT", "5432")),
-            dbname=dbname,
-            user=user,
-            password=password,
-            connect_timeout=5,
-        )
+def create_connection() -> psycopg.Connection:
+    dotenv.load_dotenv()
+
+    return psycopg.connect(
+        host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+        port=int(os.environ.get("POSTGRES_PORT", "5432")),
+        dbname=os.environ["POSTGRES_DB"],
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        connect_timeout=5,
+        autocommit=False,
+    )
+
+
+def with_connection(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        connection = create_connection()
+
         try:
-            return f(cnn, *args, **kwargs)
+            return func(connection, *args, **kwargs)
         finally:
-            cnn.close()
+            connection.close()
 
-    return with_connection_
+    return wrapper
