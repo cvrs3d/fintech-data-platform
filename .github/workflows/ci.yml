@@ -110,13 +110,21 @@ jobs:
       - name: Check pipeline counts
         run: uv run --locked python tests/check_pipeline.py
       
+      - name: Prepare ingestion test database
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T postgres createdb -U "$POSTGRES_USER" fintech_test
+
+          for migration in infra/sql/{001_source_schema,005_raw_entries,006_ingestion_runs,008_raw_accounts,009_raw_currency,010_source_account_history,011_raw_accounts_source_history}.sql; do
+            docker compose exec -T postgres \
+              psql -U "$POSTGRES_USER" -d fintech_test \
+              -v ON_ERROR_STOP=1 --single-transaction -f - < "$migration"
+          done
+
       - name: Test ingestion runtime
         env:
+          POSTGRES_DB: fintech_test
           PYTHONPATH: ingestion
-        run: |
-          uv run --locked python -m tests.test_ingestion_runtime
-          uv run --locked python -m tests.test_connection_runtime
-          uv run --locked python -m tests.test_currency_quarantine
-          uv run --locked python -m tests.test_currency_quarantine_failure
-          uv run --locked python -m tests.test_accounts_repeat
+        run: uv run --locked python -m pytest -q tests/
   

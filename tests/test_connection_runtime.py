@@ -4,7 +4,7 @@ from  ingestion.runtime import RunContext, run_pipeline
 from ingestion.infra import create_connection, utc_now
 
 
-if __name__ == "__main__":
+def test_connection_failure():
 
     test_uuid = uuid.uuid4()
     print(test_uuid)

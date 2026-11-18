@@ -11,7 +11,7 @@ from ingestion.load_currency import (
 )
 
 
-def test_currency_quarantine() -> None:
+def test_currency_quarantine(one_currency) -> None:
     test_run_id = uuid.uuid4()
 
     # Выбираем существующую валюту и свободный тестовый код.

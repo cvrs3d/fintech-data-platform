@@ -14,7 +14,7 @@ def write_quarantine_then_fail(connection: psycopg.Connection, context: RunConte
     write_currency_quarantine(connection, context, exp)
     connection.execute("SELECT 1 / 0")
 
-def test_currency_quarantine() -> None:
+def test_currency_quarantine(one_currency) -> None:
     test_run_id = uuid.uuid4()
 
     # Выбираем существующую валюту и свободный тестовый код.

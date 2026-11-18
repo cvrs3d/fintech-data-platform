@@ -1,6 +1,6 @@
 # Shared ingestion runtime and failure handling
 
-Validated on the development VM on 2026-11-17.
+VM validation: 2026-11-17 and 2026-11-18.
 
 ## Scope
 
@@ -65,61 +65,54 @@ have to sum to the number of source rows on an unsuccessful run.
 - A quarantine write failure does not turn the original conflict into success
   or replace its cause with the secondary SQL exception.
 
-## Validation on the VM
+## Isolated pytest suite (2026-11-18)
 
-Tests ran sequentially against the existing development PostgreSQL database.
-Each verification used a new connection to inspect persisted state.
+The runtime tests use a dedicated PostgreSQL database, `fintech_test`.
+On a fresh database, apply migrations 001, 005, 006, 008, 009, 010 and 011
+from `infra/sql/` in order, one file at a time. Skip demo data and baseline
+ingestion: pytest fixtures prepare the data for each scenario.
 
-| Test module | Result | Peak RSS (KiB) | Elapsed (s) |
-| --- | --- | ---: | ---: |
-| `tests.test_ingestion_runtime` | PASS: insert rolled back, FAILED audit and original error preserved | 43200 | 0.24 |
-| `tests.test_connection_runtime` | PASS: injected connection failure, no audit row | 42844 | 0.22 |
-| `tests.test_currency_quarantine` | PASS: source change rolled back, RAW unchanged, quarantine and FAILED saved | 41204 | 0.28 |
-| `tests.test_currency_quarantine_failure` | PASS: quarantine insert rolled back to savepoint, original cause and FAILED saved | 43268 | 0.30 |
-| `tests.test_accounts_repeat` | PASS: both runs successful, second saved 0 and skipped 4 | 42980 | 0.31 |
+Run from the repository root:
 
-Maximum observed Python-process RSS was 43268 KiB, approximately 42.25 MiB,
-below the 512 MiB test-process budget. PostgreSQL memory is excluded. These are
-small-fixture results, not a benchmark of large source histories.
+    PYTHONPATH=ingestion uv run --locked python -m pytest -q tests/
 
-The quarantine failure test deliberately executes `SELECT 1 / 0` after a real
-quarantine insert. Its `DivisionByZero` error log is expected; the original
-currency conflict remains the exception seen by the caller and the audit cause.
-The connection failure test injects an exception in the factory rather than
-stopping the real database.
+An autouse fixture sets `POSTGRES_DB=fintech_test` so that connections opened
+by the runtime also use the test database. Before truncating tables, setup
+checks `current_database()` on the connection that will perform the cleanup.
+Run the tests sequentially because they reset shared test tables.
 
-The repeat test observed `first_saved=0`, `second_saved=0`, `second_skipped=4`.
-It proves repeat behavior for existing loaded history; this run did not exercise
-a successful insertion of a new account version.
+| Scenario | Expected persisted state |
+| --- | --- |
+| Account first load and replay | The fixture creates one source history version and leaves RAW empty. The first run saves it; the second skips it. RAW still contains one version. |
+| Failure after RAW insertion | The inserted row rolls back. A new connection sees a FAILED audit with zero saved and the original error. |
+| Connection failure | The factory raises before RUNNING. The caller receives the error and no audit row exists for the run UUID. |
+| Currency conflict | The fixture seeds matching source and RAW codes. A conflicting source change rolls back; quarantine and FAILED record the conflict. |
+| Quarantine failure | A deliberate SQL error after the quarantine insert rolls that insert back to the savepoint. FAILED retains the original currency conflict. |
 
-## Running the tests
+Observed on the VM: `first_saved=1, second_saved=0, second_skipped=1`
+for the isolated account test (`1 passed in 0.19s`). Both currency tests
+also passed individually.
 
-Run from the repository root after schema initialization and baseline ingestion.
-Keep source data unchanged and do not run competing loaders during these tests.
-The tests leave audit records and, where expected, quarantine records behind.
+CI keeps the existing pipeline count checks on `fintech` and initializes
+`fintech_test` separately for pytest. The expected suite result is `5 passed`.
 
-```bash
-(
-    set -e
-    for test_module in \
-        tests.test_ingestion_runtime \
-        tests.test_connection_runtime \
-        tests.test_currency_quarantine \
-        tests.test_currency_quarantine_failure \
-        tests.test_accounts_repeat
-    do
-        PYTHONPATH=ingestion /usr/bin/time \
-            -f 'Peak RAM: %M KiB | Elapsed: %e s' \
-            .venv/bin/python -m "$test_module"
-    done
-)
-```
+## Historical resource measurement (2026-11-17)
 
-`PYTHONPATH=ingestion` supports the existing sibling imports in the loaders.
-These tests are executable modules; some assertions live under the main guard,
-so pytest collection alone is not equivalent to running all five modules.
-In CI, execute the modules sequentially after the existing pipeline count check.
-The local results above do not substitute for the PR's clean-database CI run.
+These figures were measured before the switch to pytest. Each module ran as
+a separate Python process against the populated development database.
+
+| Module | Peak Python RSS (KiB) | Elapsed (s) |
+| --- | ---: | ---: |
+| `tests.test_ingestion_runtime` | 43200 | 0.24 |
+| `tests.test_connection_runtime` | 42844 | 0.22 |
+| `tests.test_currency_quarantine` | 41204 | 0.28 |
+| `tests.test_currency_quarantine_failure` | 43268 | 0.30 |
+| `tests.test_accounts_repeat` | 42980 | 0.31 |
+
+Peak RSS was 43268 KiB (42.25 MiB), below the 512 MiB test-process budget.
+This excludes PostgreSQL and is not a measurement of the current pytest suite.
+The original repeat test skipped four existing versions; the isolated test
+also verifies the first insertion.
 
 ## Entry points and limitations
 

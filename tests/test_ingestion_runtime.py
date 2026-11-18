@@ -44,7 +44,7 @@ def insert_account_then_fail(cnn: psycopg.Connection, context: RunContext) -> No
             context.stats.rows_saved += 1
             raise RuntimeError("TEST_FAILURE_AFTER_INSERT")
 
-if __name__ == "__main__":
+def test_ingestion_rollback(one_account_version: int) -> None:
     test_run_id = uuid.uuid4()
     print(test_run_id )
     try:

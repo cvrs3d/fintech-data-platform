@@ -12,7 +12,7 @@ def count_raw_accounts() -> int:
             return cur.fetchone()[0]
 
 
-def test_accounts_repeat() -> None:
+def test_accounts_repeat(one_account_version: int) -> None:
     first_run_id = uuid.uuid4()
     second_run_id = uuid.uuid4()
 
